@@ -33,6 +33,9 @@
 
 Пример запроса для запуска в терминале:
 ```
+pip install -r requirements.txt
+```
+```
 python3 ai_service/ai_main.py
 ```
 
