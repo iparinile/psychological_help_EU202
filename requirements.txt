@@ -1,2 +1,6 @@
-openai 
-logging
+openai~=1.78.1
+logging~=0.4.9.6
+
+aiogram~=3.20.0.post0
+python-dotenv~=1.1.0
+aiosqlite~=0.21.0
