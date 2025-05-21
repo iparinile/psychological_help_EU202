@@ -39,6 +39,7 @@ wheels/
 config.json
 *.log
 tests.ipynb
+
 *.db
 *.db-journal
 *.db-trace
