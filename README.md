@@ -17,7 +17,7 @@
 
 *Технологии:*
 * Backend: Python
-* Frontend: React.js
+* Frontend: Telegram чат
 
 *Команда проекта:*
 * DEV: Поселеннов И (iparinile)
