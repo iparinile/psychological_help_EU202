@@ -3,18 +3,29 @@ import json
 from typing import List, Dict, Optional
 import os
 import logging
+from database import log_book_recommendations
 
-def get_book_recommendations(issue_id: str, dialogue: List[Dict[str, str]]) -> Dict[str, List[Dict[str, str]]]:
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+def get_book_recommendations(dialogue_id: int, user_id: str, issue_id: str, dialogue: List[Dict[str, str]]) -> Dict[str, List[Dict[str, str]]]:
     """
     Get personalized book and resource recommendations based on the user's issue and dialogue.
     
     Args:
+        dialogue_id (int): ID of the dialogue to associate recommendations with
+        user_id (str): Unique identifier for the user
         issue_id (str): ID of the psychological issue (1 - depression, 2 - burnout, 3 - relationship problems)
         dialogue (List[Dict[str, str]]): List of message dictionaries with 'role' and 'content' keys
         
     Returns:
         Dict[str, List[Dict[str, str]]]: Dictionary containing recommended books and resources
     """
+    logging.info(f"Getting book recommendations for user {user_id}, issue {issue_id}, dialogue {dialogue_id}")
+    
     # Load config
     with open('ai_service/config.json', 'r') as f:
         config = json.load(f)
@@ -26,6 +37,7 @@ def get_book_recommendations(issue_id: str, dialogue: List[Dict[str, str]]) -> D
 
     # Create recommendation prompt
     recommendation_prompt = create_recommendation_prompt(issue_id, dialogue)
+    logging.info("Created recommendation prompt")
     
     messages = [
         {
@@ -64,13 +76,22 @@ def get_book_recommendations(issue_id: str, dialogue: List[Dict[str, str]]) -> D
         }
     ]
 
+    logging.info("Sending request to LLM for book recommendations")
     completion = client.chat.completions.create(
         model="google/gemma-3-4b-it:free",
         messages=messages
     )
     response = completion.choices[0].message.content
+    logging.info("Received response from LLM")
+    
     try:
         recommendations = json.loads(response.replace("```json", "").replace("```", ""))
+        logging.info("Successfully parsed recommendations JSON")
+        
+        # Log the recommendations to the database
+        recommendation_id = log_book_recommendations(user_id, issue_id, recommendations, dialogue_id)
+        logging.info(f"Book recommendations logged with ID: {recommendation_id}")
+        
         return recommendations
     except json.JSONDecodeError:
         logging.error("Failed to parse recommendations JSON")
@@ -87,6 +108,8 @@ def create_recommendation_prompt(issue_id: str, dialogue: List[Dict[str, str]]) 
     Returns:
         str: Formatted prompt for recommendations
     """
+    logging.info(f"Creating recommendation prompt for issue {issue_id}")
+    
     issue_types = {
         "1": "депрессия",
         "2": "профессиональное выгорание",
@@ -105,6 +128,7 @@ def create_recommendation_prompt(issue_id: str, dialogue: List[Dict[str, str]]) 
     
     Пожалуйста, предоставь рекомендации в указанном JSON формате."""
     
+    logging.info("Recommendation prompt created")
     return prompt
 
 def format_recommendations(recommendations: Dict[str, List[Dict[str, str]]]) -> str:
@@ -117,6 +141,8 @@ def format_recommendations(recommendations: Dict[str, List[Dict[str, str]]]) -> 
     Returns:
         str: Formatted recommendations text
     """
+    logging.info("Formatting recommendations")
+    
     formatted_text = "📚 Рекомендуемые книги:\n\n"
     
     for book in recommendations.get("books", []):
@@ -133,17 +159,36 @@ def format_recommendations(recommendations: Dict[str, List[Dict[str, str]]]) -> 
             formatted_text += f"  Ссылка: {resource['link']}\n"
         formatted_text += "\n"
     
+    logging.info("Recommendations formatted successfully")
     return formatted_text
 
-def get_book_recommendations_from_file(file_path: str, issue_id: str) -> Dict[str, List[Dict[str, str]]]:
+def get_book_recommendations_from_file(file_path: str, dialogue_id: int, user_id: str, issue_id: str) -> str:
+    """
+    Get book recommendations from a dialogue file.
+    
+    Args:
+        file_path (str): Path to the dialogue file
+        dialogue_id (int): ID of the dialogue to associate recommendations with
+        user_id (str): Unique identifier for the user
+        issue_id (str): ID of the psychological issue
+        
+    Returns:
+        str: Formatted recommendations text
+    """
+    logging.info(f"Getting book recommendations from file {file_path}")
+    
     with open(file_path, 'r') as f:
         file_content = json.load(f)
     dialogue = file_content[1:]
-    recommendations = get_book_recommendations(issue_id, dialogue)
-    print(recommendations)
+    logging.info(f"Read dialogue from file with {len(dialogue)} messages")
+    
+    recommendations = get_book_recommendations(dialogue_id, user_id, issue_id, dialogue)
     formatted_recommendations = format_recommendations(recommendations)
+    logging.info("Book recommendations processed successfully")
     return formatted_recommendations
 
 if __name__ == "__main__":
-    print(get_book_recommendations_from_file('ai_service/demo_dialogue.json', '1'))
+    # Example usage
+    logging.info("Starting demo book recommendations")
+    print(get_book_recommendations_from_file('ai_service/demo_dialogue.json', 1, 'demo_user', '1'))
 
