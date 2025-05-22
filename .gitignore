@@ -40,5 +40,9 @@ config.json
 *.log
 tests.ipynb
 
-# DB
 *.db
+*.db-journal
+*.db-trace
+*.db-wal
+*.db-shm
+*.db-lock

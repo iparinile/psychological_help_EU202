@@ -3,19 +3,35 @@ import json
 from typing import List, Dict
 import os
 import logging
-def initialize_dialogue(issue_id: str, output_path: str = 'ai_service/demo_dialogue.json') -> None:
+from database import log_dialogue
+# from ai_books import get_book_recommendations
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+def initialize_dialogue(issue_id: str, user_id: str, output_path: str = 'ai_service/demo_dialogue.json') -> int:
     """
     Initialize dialogue with system prompt based on selected issue.
     
     Args:
         issue_id (str): ID of the psychological issue (1 - depression, 2 - burnout, 3 - relationship problems)
+        user_id (str): Unique identifier for the user
         output_path (str): Path where to save the initial dialogue
+        
+    Returns:
+        int: ID of the created dialogue in the database
     """
+    logging.info(f"Initializing dialogue for user {user_id} with issue {issue_id}")
+    
     # Load system prompts
     with open('ai_service/system_prompts.json', 'r', encoding='utf-8') as f:
         prompts = json.load(f)
     
     if issue_id not in prompts:
+        logging.error(f"Invalid issue_id: {issue_id}")
         raise ValueError(f"Invalid issue_id: {issue_id}. Must be one of: 1, 2, 3")
     
     # Create initial dialogue with system prompt and first message
@@ -29,20 +45,27 @@ def initialize_dialogue(issue_id: str, output_path: str = 'ai_service/demo_dialo
             "content": prompts[issue_id]["initial_message"]
         }
     ]
-    print(f"Initial dialogue: {initial_dialogue}")
-    get_llm_response(initial_dialogue)
+    logging.info("Created initial dialogue with system prompt")
+    
+    # Log the initial dialogue and return its ID
+    dialogue_id = log_dialogue(user_id, issue_id, initial_dialogue)
+    logging.info(f"Initial dialogue logged with ID: {dialogue_id}")
+    return dialogue_id
 
-
-def get_llm_response(messages: List[Dict[str, str]]) -> str:
+def get_llm_response(messages: List[Dict[str, str]], user_id: str, issue_id: str) -> str:
     """
     Get response from LLM based on dialogue history.
     
     Args:
         messages (List[Dict[str, str]]): List of message dictionaries with 'role' and 'content' keys
+        user_id (str): Unique identifier for the user
+        issue_id (str): ID of the psychological issue
         
     Returns:
         str: LLM's response text
     """
+    logging.info(f"Getting LLM response for user {user_id}, issue {issue_id}")
+    
     # Load config
     with open('ai_service/config.json', 'r') as f:
         config = json.load(f)
@@ -51,25 +74,61 @@ def get_llm_response(messages: List[Dict[str, str]]) -> str:
         base_url="https://openrouter.ai/api/v1",
         api_key=config['openrouter_api_key'],
     )
-    print(f"Getting response from LLM")
+    
+    logging.info("Sending request to LLM")
     completion = client.chat.completions.create(
         model="google/gemma-3-4b-it:free",
         messages=messages
     )
-    print(f"Response from LLM: {completion.choices[0].message.content}")
-    return completion.choices[0].message.content
+    response = completion.choices[0].message.content
+    logging.info("Received response from LLM")
+    
+    # Log the updated dialogue with the new response
+    updated_messages = messages + [{"role": "assistant", "content": response}]
+    dialogue_id = log_dialogue(user_id, issue_id, updated_messages)
+    logging.info(f"Updated dialogue logged with ID: {dialogue_id}")
+    
+    # Get and log book recommendations
+    # recommendations = get_book_recommendations(user_id, issue_id, updated_messages)
+    # log_book_recommendations(user_id, issue_id, recommendations, dialogue_id)
+    
+    return response
 
 def read_messages(path: str) -> List[Dict[str, str]]:
-    print(f"Reading messages from {path}")
+    """
+    Read messages from a file
+    
+    Args:
+        path (str): Path to the message file
+        
+    Returns:
+        List[Dict[str, str]]: List of message dictionaries
+    """
+    logging.info(f"Reading messages from {path}")
     with open(path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        messages = json.load(f)
+    logging.info(f"Successfully read {len(messages)} messages")
+    return messages
 
-def chat(issue_id: str, input_path: str = 'ai_service/demo_dialogue.json'):
-    print(f"Chatting with issue_id: {issue_id}")
+def chat(issue_id: str, user_id: str, input_path: str = 'ai_service/demo_dialogue.json') -> str:
+    """
+    Main chat function that handles the conversation flow.
+    
+    Args:
+        issue_id (str): ID of the psychological issue
+        user_id (str): Unique identifier for the user
+        input_path (str): Path to the dialogue file
+        
+    Returns:
+        str: Response from the LLM
+    """
+    logging.info(f"Starting chat session for user {user_id} with issue {issue_id}")
     messages = read_messages(input_path)
-    response = get_llm_response(messages)
-    # messages.append({"role": "assistant", "content": response})
+    response = get_llm_response(messages, user_id, issue_id)
+    logging.info("Chat session completed")
     return response
 
 if __name__ == "__main__":
-    chat(1, 'ai_service/demo_dialogue.json')
+    # Example usage with a demo user
+    logging.info("Starting demo chat session")
+    chat('1', 'demo_user', 'ai_service/demo_dialogue.json')
