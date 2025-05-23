@@ -3,7 +3,7 @@ import json
 from typing import List, Dict, Optional
 import os
 import logging
-from database import log_book_recommendations
+from .database import log_book_recommendations
 
 # Configure logging
 logging.basicConfig(

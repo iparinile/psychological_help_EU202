@@ -3,8 +3,8 @@ import json
 from typing import List, Dict
 import os
 import logging
-from database import log_dialogue
-# from ai_books import get_book_recommendations
+from .database import log_dialogue, log_book_recommendations
+from .ai_books import get_book_recommendations
 
 # Configure logging
 logging.basicConfig(
@@ -76,12 +76,20 @@ def get_llm_response(messages: List[Dict[str, str]], user_id: str, issue_id: str
     )
     
     logging.info("Sending request to LLM")
-    completion = client.chat.completions.create(
-        model="google/gemma-3-4b-it:free",
-        messages=messages
-    )
-    response = completion.choices[0].message.content
-    logging.info("Received response from LLM")
+    
+    try:
+        completion = client.chat.completions.create(
+            model="google/gemma-3-4b-it:free",
+            messages=messages,
+            max_tokens=4000,
+            temperature=0.7
+        )
+        response = completion.choices[0].message.content
+        logging.info(f"Received response: '{response[:50]}...' (length: {len(response) if response else 0})")
+        
+    except Exception as api_error:
+        logging.error(f"Error getting LLM response: {api_error}")
+        response = "Извините, произошла техническая ошибка. Попробуйте повторить запрос позже."
     
     # Log the updated dialogue with the new response
     updated_messages = messages + [{"role": "assistant", "content": response}]
@@ -89,8 +97,9 @@ def get_llm_response(messages: List[Dict[str, str]], user_id: str, issue_id: str
     logging.info(f"Updated dialogue logged with ID: {dialogue_id}")
     
     # Get and log book recommendations
-    # recommendations = get_book_recommendations(user_id, issue_id, updated_messages)
-    # log_book_recommendations(user_id, issue_id, recommendations, dialogue_id)
+    # Можно добавить рекомендации книг, но пока оставим без них для простоты
+    # recommendations = get_book_recommendations(dialogue_id, user_id, issue_id, updated_messages)
+    # от ai_books import log_book_recommendations уже импортирован в database
     
     return response
 
