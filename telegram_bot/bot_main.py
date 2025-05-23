@@ -9,14 +9,10 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 import aiosqlite
 from dotenv import load_dotenv
 import os
-import sys
 import json
 
-# Добавляем путь к ai_service для импорта
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-# Импортируем функции из ai_service
-from ai_service import initialize_dialogue, get_llm_response, get_book_recommendations
+# Импортируем функции из ai_service(относительный импорт)
+from ..ai_service import initialize_dialogue, get_llm_response, get_book_recommendations
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
