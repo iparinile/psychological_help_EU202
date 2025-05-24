@@ -1,7 +1,7 @@
 from openai import OpenAI
 import json
 
-with open('ai_service/config.json', 'r') as f:
+with open('telegram_bot/ai_service/config.json', 'r') as f:
     config = json.load(f)
 
 client = OpenAI(
