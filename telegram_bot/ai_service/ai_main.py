@@ -12,7 +12,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-def initialize_dialogue(issue_id: str, user_id: str, output_path: str = 'ai_service/demo_dialogue.json') -> int:
+def initialize_dialogue(issue_id: str, user_id: str, output_path: str = 'telegram_bot/ai_service/demo_dialogue.json') -> int:
     """
     Initialize dialogue with system prompt based on selected issue.
     
@@ -27,7 +27,7 @@ def initialize_dialogue(issue_id: str, user_id: str, output_path: str = 'ai_serv
     logging.info(f"Initializing dialogue for user {user_id} with issue {issue_id}")
     
     # Load system prompts
-    with open('ai_service/system_prompts.json', 'r', encoding='utf-8') as f:
+    with open('telegram_bot/ai_service/system_prompts.json', 'r', encoding='utf-8') as f:
         prompts = json.load(f)
     
     if issue_id not in prompts:
@@ -67,7 +67,7 @@ def get_llm_response(messages: List[Dict[str, str]], user_id: str, issue_id: str
     logging.info(f"Getting LLM response for user {user_id}, issue {issue_id}")
     
     # Load config
-    with open('ai_service/config.json', 'r') as f:
+    with open('telegram_bot/ai_service/config.json', 'r') as f:
         config = json.load(f)
 
     client = OpenAI(
@@ -119,7 +119,7 @@ def read_messages(path: str) -> List[Dict[str, str]]:
     logging.info(f"Successfully read {len(messages)} messages")
     return messages
 
-def chat(issue_id: str, user_id: str, input_path: str = 'ai_service/demo_dialogue.json') -> str:
+def chat(issue_id: str, user_id: str, input_path: str = 'telegram_bot/ai_service/demo_dialogue.json') -> str:
     """
     Main chat function that handles the conversation flow.
     
@@ -140,4 +140,4 @@ def chat(issue_id: str, user_id: str, input_path: str = 'ai_service/demo_dialogu
 if __name__ == "__main__":
     # Example usage with a demo user
     logging.info("Starting demo chat session")
-    chat('1', 'demo_user', 'ai_service/demo_dialogue.json')
+    chat('1', 'demo_user', 'telegram_bot/ai_service/demo_dialogue.json')

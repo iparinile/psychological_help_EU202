@@ -11,9 +11,6 @@ from dotenv import load_dotenv
 import os
 import json
 
-# Импортируем функции из ai_service(относительный импорт)
-from ..ai_service import initialize_dialogue, get_llm_response, get_book_recommendations
-
 # Загрузка переменных окружения из файла .env
 load_dotenv()
 
@@ -51,6 +48,9 @@ dp = Dispatcher(storage=MemoryStorage())
 # Создание роутера
 router = Router()
 
+# Импортируем функции из ai_service
+from ai_service import initialize_dialogue, get_llm_response, get_book_recommendations
+
 # Команда для начала взаимодействия с ботом
 @router.message(CommandStart())
 async def start(message: types.Message, state: FSMContext) -> None:
@@ -70,7 +70,7 @@ async def start(message: types.Message, state: FSMContext) -> None:
     )
     
     await state.set_state(UserStates.choosing_issue)
-    await message.answer("Привет! Я бот психологической поддержки. Выбери один из вариантов ниже, чтобы начать консультацию.",
+    await message.answer("Выберите тему, которую хотите обсудить:",
                          reply_markup=reply_keyboard)
 
 # Обработчик выбора проблемы
@@ -100,7 +100,7 @@ async def choose_issue(message: types.Message, state: FSMContext):
             }
             
             # Получаем начальное сообщение от AI
-            with open('ai_service/system_prompts.json', 'r', encoding='utf-8') as f:
+            with open('telegram_bot/ai_service/system_prompts.json', 'r', encoding='utf-8') as f:
                 prompts = json.load(f)
             
             initial_message = prompts[issue_id]["initial_message"]
@@ -140,7 +140,7 @@ async def handle_dialogue(message: types.Message, state: FSMContext):
     try:
         # Получаем ответ от AI
         # Формируем полную историю диалога (ограничиваем контекст для стабильности)
-        with open('ai_service/system_prompts.json', 'r', encoding='utf-8') as f:
+        with open('telegram_bot/ai_service/system_prompts.json', 'r', encoding='utf-8') as f:
             prompts = json.load(f)
         
         # Берем последние 10 сообщений чтобы не перегружать контекст
@@ -229,7 +229,7 @@ async def handle_books_callback(callback: types.CallbackQuery):
     
     try:
         # Формируем полную историю диалога для рекомендаций
-        with open('ai_service/system_prompts.json', 'r', encoding='utf-8') as f:
+        with open('telegram_bot/ai_service/system_prompts.json', 'r', encoding='utf-8') as f:
             prompts = json.load(f)
         
         full_messages = [
@@ -258,7 +258,7 @@ async def handle_books_callback(callback: types.CallbackQuery):
                 retry_kb = InlineKeyboardMarkup(inline_keyboard=[
                     [InlineKeyboardButton(text="🔄 Попробовать еще раз", callback_data=f"books_{user_id}")]
                 ])
-                await callback.message.answer("К сожалению, не удалось сформировать рекомендации. Это может быть временная проблема с сервисом.", reply_markup=retry_kb)
+                await callback.message.answer("К сожалению, не удалось сформировать рекомендации. Это может быть временная проблема с сервисом попробуйте чуть позже", reply_markup=retry_kb)
         else:
             # Предлагаем повторить попытку  
             retry_kb = InlineKeyboardMarkup(inline_keyboard=[

@@ -11,7 +11,8 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-DATABASE_PATH = 'ai_service/dialogues.db'
+# Путь к базе данных относительно корня проекта
+DATABASE_PATH = 'telegram_bot/ai_service/dialogues.db'
 
 def get_db_connection():
     """Create a database connection and return it"""
