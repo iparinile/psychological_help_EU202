@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher, types, Router
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -70,8 +70,19 @@ async def start(message: types.Message, state: FSMContext) -> None:
     )
     
     await state.set_state(UserStates.choosing_issue)
-    await message.answer("Выберите тему, которую хотите обсудить:",
+    await message.answer("Здравствуйте! Выберите тему, которую хотите обсудить:",
                          reply_markup=reply_keyboard)
+
+
+# Команда для предоставления помощи по использованию бота
+@router.message(Command(commands="help"))
+async def start(message: types.Message, state: FSMContext) -> None:
+    await message.answer("""Привет! Я бот психологической поддержки. Я здесь, чтобы помочь тебе выразить свои чувства и получить поддержку. Вот как со мной можно взаимодействовать:
+
+/start — команда для начала работы с ботом. После её ввода ты начнешь диалог с психологом.
+/help — команда, которую ты сейчас используешь, чтобы получить справочную информацию о работе бота и список команд.
+/feedback — если у тебя есть какие-либо вопросы, пожелания или ты хочешь поделиться своим опытом работы с ботом, используй эту команду, чтобы отправить мне сообщение.
+Выбери одну из предложенных опций или воспользуйся командами для взаимодействия со мной. Я всегда готов выслушать тебя и предложить поддержку.""")
 
 # Обработчик выбора проблемы
 @router.message(UserStates.choosing_issue)
