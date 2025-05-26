@@ -3,7 +3,7 @@ import json
 from typing import List, Dict, Optional
 import os
 import logging
-from database import log_book_recommendations
+from .database import log_book_recommendations
 
 # Configure logging
 logging.basicConfig(
@@ -27,7 +27,7 @@ def get_book_recommendations(dialogue_id: int, user_id: str, issue_id: str, dial
     logging.info(f"Getting book recommendations for user {user_id}, issue {issue_id}, dialogue {dialogue_id}")
     
     # Load config
-    with open('ai_service/config.json', 'r') as f:
+    with open('telegram_bot/ai_service/config.json', 'r') as f:
         config = json.load(f)
 
     client = OpenAI(
@@ -190,5 +190,5 @@ def get_book_recommendations_from_file(file_path: str, dialogue_id: int, user_id
 if __name__ == "__main__":
     # Example usage
     logging.info("Starting demo book recommendations")
-    print(get_book_recommendations_from_file('ai_service/demo_dialogue.json', 1, 'demo_user', '1'))
+    print(get_book_recommendations_from_file('telegram_bot/ai_service/demo_dialogue.json', 1, 'demo_user', '1'))
 

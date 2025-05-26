@@ -3,8 +3,8 @@ import json
 from typing import List, Dict
 import os
 import logging
-from database import log_dialogue
-# from ai_books import get_book_recommendations
+from .database import log_dialogue, log_book_recommendations
+from .ai_books import get_book_recommendations
 
 # Configure logging
 logging.basicConfig(
@@ -12,7 +12,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-def initialize_dialogue(issue_id: str, user_id: str, output_path: str = 'ai_service/demo_dialogue.json') -> int:
+def initialize_dialogue(issue_id: str, user_id: str, output_path: str = 'telegram_bot/ai_service/demo_dialogue.json') -> int:
     """
     Initialize dialogue with system prompt based on selected issue.
     
@@ -27,7 +27,7 @@ def initialize_dialogue(issue_id: str, user_id: str, output_path: str = 'ai_serv
     logging.info(f"Initializing dialogue for user {user_id} with issue {issue_id}")
     
     # Load system prompts
-    with open('ai_service/system_prompts.json', 'r', encoding='utf-8') as f:
+    with open('telegram_bot/ai_service/system_prompts.json', 'r', encoding='utf-8') as f:
         prompts = json.load(f)
     
     if issue_id not in prompts:
@@ -67,7 +67,7 @@ def get_llm_response(messages: List[Dict[str, str]], user_id: str, issue_id: str
     logging.info(f"Getting LLM response for user {user_id}, issue {issue_id}")
     
     # Load config
-    with open('ai_service/config.json', 'r') as f:
+    with open('telegram_bot/ai_service/config.json', 'r') as f:
         config = json.load(f)
 
     client = OpenAI(
@@ -76,12 +76,20 @@ def get_llm_response(messages: List[Dict[str, str]], user_id: str, issue_id: str
     )
     
     logging.info("Sending request to LLM")
-    completion = client.chat.completions.create(
-        model="google/gemma-3-4b-it:free",
-        messages=messages
-    )
-    response = completion.choices[0].message.content
-    logging.info("Received response from LLM")
+    
+    try:
+        completion = client.chat.completions.create(
+            model="google/gemma-3-4b-it:free",
+            messages=messages,
+            max_tokens=4000,
+            temperature=0.7
+        )
+        response = completion.choices[0].message.content
+        logging.info(f"Received response: '{response[:50]}...' (length: {len(response) if response else 0})")
+        
+    except Exception as api_error:
+        logging.error(f"Error getting LLM response: {api_error}")
+        response = "Извините, произошла техническая ошибка. Попробуйте повторить запрос позже."
     
     # Log the updated dialogue with the new response
     updated_messages = messages + [{"role": "assistant", "content": response}]
@@ -89,8 +97,9 @@ def get_llm_response(messages: List[Dict[str, str]], user_id: str, issue_id: str
     logging.info(f"Updated dialogue logged with ID: {dialogue_id}")
     
     # Get and log book recommendations
-    # recommendations = get_book_recommendations(user_id, issue_id, updated_messages)
-    # log_book_recommendations(user_id, issue_id, recommendations, dialogue_id)
+    # Можно добавить рекомендации книг, но пока оставим без них для простоты
+    # recommendations = get_book_recommendations(dialogue_id, user_id, issue_id, updated_messages)
+    # от ai_books import log_book_recommendations уже импортирован в database
     
     return response
 
@@ -110,7 +119,7 @@ def read_messages(path: str) -> List[Dict[str, str]]:
     logging.info(f"Successfully read {len(messages)} messages")
     return messages
 
-def chat(issue_id: str, user_id: str, input_path: str = 'ai_service/demo_dialogue.json') -> str:
+def chat(issue_id: str, user_id: str, input_path: str = 'telegram_bot/ai_service/demo_dialogue.json') -> str:
     """
     Main chat function that handles the conversation flow.
     
@@ -131,4 +140,4 @@ def chat(issue_id: str, user_id: str, input_path: str = 'ai_service/demo_dialogu
 if __name__ == "__main__":
     # Example usage with a demo user
     logging.info("Starting demo chat session")
-    chat('1', 'demo_user', 'ai_service/demo_dialogue.json')
+    chat('1', 'demo_user', 'telegram_bot/ai_service/demo_dialogue.json')
