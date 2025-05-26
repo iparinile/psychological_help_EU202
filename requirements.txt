@@ -1,23 +1,6 @@
-# Основные зависимости для telegram-бота
-python-telegram-bot>=13.0
-aiogram>=2.16
+openai~=1.78.1
+logging~=0.4.9.6
 
-# Для AI-сервиса
-openai>=0.27.0
-tiktoken>=0.3.0
-
-# Для базы данных
-pymongo>=4.0
-motor>=3.0
-
-# Для асинхронных запросов
-aiohttp>=3.8.0
-requests>=2.27.0
-
-# Для нагрузочных тестов
-matplotlib>=3.5.0
-numpy>=1.21.0
-pandas>=1.3.0
-
-# Для логирования и мониторинга
-prometheus-client>=0.14.0
+aiogram~=3.20.0.post0
+python-dotenv~=1.1.0
+aiosqlite~=0.21.0
