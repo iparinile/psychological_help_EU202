@@ -71,7 +71,7 @@
 ## Как тестировать:
 1. Убедиться в наличии config.json с валидным API ключом
     1.1 Если его нет, то создайте его. Пример в файле config_example.json
-2. Запустить ai_main.py с указанием типа проблемы (1-3)
+2. Запустить py telegram_bot/bot_main.py
 3. Проверить корректность инициализации диалога и ответов модели
 4. Проверить создание и работу базы данных:
    - Убедиться, что файл dialogues.db создан
@@ -83,7 +83,7 @@
 pip install -r requirements.txt
 ```
 ```
-python3 ai_service/ai_main.py
+py telegram_bot/bot_main.py
 ```
 
 После выполнения команд в терминале отобразится ответ ИИ и логи операций с базой данных
@@ -117,5 +117,5 @@ python3 ai_service/ai_main.py
 1. Убедиться в наличии config.json с валидным API ключом
 2. Запустить тестирование из корня проекта
 ```
-python3 ai_service/ai_books.py
+py telegram_bot/bot_main.py
 ```
