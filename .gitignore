@@ -40,6 +40,10 @@ config.json
 *.log
 tests.ipynb
 
+# Test reports
+telegram_bot/test/modul_test/tests/reports/
+telegram_bot/test/load_tests/result_tests/
+
 *.db
 *.db-journal
 *.db-trace
