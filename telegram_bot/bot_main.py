@@ -99,7 +99,8 @@ async def start(message: types.Message, state: FSMContext) -> None:
 @router.message(Command(commands="feedback"))
 async def feedback(message: types.Message, state: FSMContext):
     await message.answer(
-        "Спасибо за ваш интерес к улучшению бота! Пожалуйста, оставьте свои пожелания или комментарии:")
+        "Спасибо за ваш интерес к улучшению бота! Пожалуйста, оставьте свои пожелания или комментарии:",
+        reply_markup=types.ReplyKeyboardRemove())
     await state.set_state(UserStates.feedback)
 
 
