@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from datetime import datetime
+
 from aiogram import Bot, Dispatcher, types, Router
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -25,6 +27,7 @@ logger = logging.getLogger(__name__)
 class UserStates(StatesGroup):
     choosing_issue = State()
     in_dialogue = State()
+    feedback = State()
 
 
 # Словарь для хранения активных диалогов пользователей
@@ -35,6 +38,8 @@ user_dialogues = {}
 async def save_user(user_id, username):
     async with aiosqlite.connect('users.db') as db:
         await db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, dialogs TEXT)")
+        await db.execute("CREATE TABLE IF NOT EXISTS feedback (id INTEGER PRIMARY KEY, user_id INTEGER, feedback TEXT, "
+                         "feedback_date DATETIME)")
         await db.execute("INSERT OR REPLACE INTO users (id, username, dialogs) VALUES (?, ?, ?)",
                          (user_id, username, ''))
         await db.commit()
@@ -88,6 +93,31 @@ async def start(message: types.Message, state: FSMContext) -> None:
 /help — команда, которую ты сейчас используешь, чтобы получить справочную информацию о работе бота и список команд.
 /feedback — если у тебя есть какие-либо вопросы, пожелания или ты хочешь поделиться своим опытом работы с ботом, используй эту команду, чтобы отправить мне сообщение.
 Выбери одну из предложенных опций или воспользуйся командами для взаимодействия со мной. Я всегда готов выслушать тебя и предложить поддержку.""")
+
+
+# Обработчик команды /feedback
+@router.message(Command(commands="feedback"))
+async def feedback(message: types.Message, state: FSMContext):
+    await message.answer(
+        "Спасибо за ваш интерес к улучшению бота! Пожалуйста, оставьте свои пожелания или комментарии:",
+        reply_markup=types.ReplyKeyboardRemove())
+    await state.set_state(UserStates.feedback)
+
+
+# Обработчик сообщения с обратной связью
+@router.message(UserStates.feedback)
+async def handle_feedback(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    feedback_text = message.text
+    feedback_date = datetime.now()
+
+    async with aiosqlite.connect('users.db') as db:
+        await db.execute("INSERT INTO feedback (user_id, feedback, feedback_date) VALUES (?, ?, ?)",
+                         (user_id, feedback_text, feedback_date))
+        await db.commit()
+
+    await message.answer("Спасибо за вашу обратную связь! Мы ценим ваше мнение и будем работать над улучшением бота.")
+    await state.clear()
 
 
 # Обработчик выбора проблемы
